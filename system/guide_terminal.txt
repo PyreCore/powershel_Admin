@@ -1,0 +1,212 @@
+========================================================================
+              GUIDE TERMINAL WINDOWS (PowerShell) - TRICHE MEMO
+========================================================================
+
+Ce fichier rassemble tout ce qu'on a utilisé/modifié pour ce projet :
+script system_status.ps1, commandes d'inspection, et les bases du
+terminal PowerShell (navigation, fichiers, dossiers, exécution).
+
+========================================================================
+1) DÉMARRER / OBTENIR LE TERMINAL
+========================================================================
+
+- PowerShell 5.1 (fourni avec Windows)      -> touche Windows, taper "powershell"
+- PowerShell 7+ (optionnel, moderne)        -> Windows Store : "PowerShell"
+  (les exemples ci-dessous marchent dans les deux)
+- Effacer l'écran                           -> cls  (ou Clear-Host)
+- Quitter                                   -> exit
+- Raccourcis utiles :
+    - Flèche haut/bas     -> historique des commandes
+    - Tab                 -> complétion automatique des chemins/noms
+    - Ctrl+R              -> recherche dans l'historique
+    - Ctrl+C              -> annuler la commande en cours
+
+========================================================================
+2) AIDE ET DÉCOUVERTE DES COMMANDES
+========================================================================
+
+  Get-Help Get-Process              -> aide d'une cmdlet
+  Get-Command *process*             -> toutes les cmdlets contenant "process"
+  Get-Command -Verb Get             -> les getters disponibles
+  Get-Alias                         -> liste des alias (cd, ls, rm, ...)
+  help npm                          -> version d'aide interactive (lire la suite)
+
+Truc : une cmdlet s'écrit   Verbe-Nom  (Get, Set, Remove, New, ...).
+Toujours taper le début d'un mot puis Tab pour compléter.
+
+========================================================================
+3) EXÉCUTER UN SCRIPT  (le fameux "./")
+========================================================================
+
+Sur Windows, on utilise "\" à la place de "/" avec le point :
+
+  .\system_status.ps1              -> exécuter le script dans le dossier courant
+  .\system_status.ps1 -Threshold 80
+  .\system_status.ps1 -NoKey
+  .\system_status.ps1 -ExportPath .\rapport.txt
+  .\system_status.ps1 -Computers SVR01, SVR02
+
+Détaillons "." :
+  .            -> le dossier courant
+  \            -> séparateur de dossier sous Windows (ici "dossier actuel")
+  .\script.ps1 -> le script situé dans le dossier actuel
+  ..           -> le dossier parent
+  ..\..\       -> deux niveaux au-dessus
+  C:\Users\mvp21\Admin\system_status.ps1  (chemin absolu)
+
+Pourquoi ".\" et pas juste le nom ?
+  Par défaut PowerShell n'exécute PAS un fichier du dossier courant sans
+  préciser .\ : c'est une protection contre l'exécution de "programmes"
+  qui traînent. Si on tape juste "system_status.ps1", Windows risque
+  d'afficher "Le terme n'est pas reconnu...".
+
+--- Politique d'exécution (ExecutionPolicy) ---
+Si un script est bloqué ("exécution de scripts désactivée") :
+
+  Get-ExecutionPolicy -List            -> voir la politique actuelle
+  Set-ExecutionPolicy RemoteSigned -Scope CurrentUser   -> autoriser les
+                                  scripts locaux (le + utilisé, sûr)
+
+Un peu de vocabulaire :
+  - ExecutionPolicy = règle qui dit si on a le droit de lancer des .ps1
+  - "RemoteSigned"  = autorise les scripts locaux + ceux signés téléchargés
+
+========================================================================
+4) NAVIGATION ENTRE DOSSIERS
+========================================================================
+
+  pwd  /  Get-Location          -> où suis-je ? (affiche le chemin)
+  ls / dir / Get-ChildItem      -> liste le contenu courant
+  Get-ChildItem -Force          -> inclut fichiers cachés
+  dir *.txt                     -> filtre par extension
+  cd ..                         -> remonter d'un dossier
+  cd D:\Projets                 -> aller à un autre lecteur/dossier
+  cd -                          -> revenir au dossier précédent
+  Tab                           -> complète le nom du dossier
+  clear                         -> vider l'écran
+
+IMPORTANT : pour changer de lecteur (C: -> D:) on peut faire "D:" tout
+seul, puis "cd D:\monchantier".
+
+========================================================================
+5) CRÉER, COPIER, RENOMMER, SUPPRIMER
+========================================================================
+
+--- CRÉER ---
+  New-Item -ItemType Directory -Path "mon_dossier"     -> nouveau dossier
+  New-Item -ItemType File -Path "notes.txt"             -> nouveau fichier
+  New-Item -ItemType File -Path "rapports\a.txt" -Force -> crée tout (plus les parents)
+  md mon_dossier          (alias mkdir)
+  Set-Content -Path "notes.txt" -Value "Hello"          -> créer + écrire dedans
+  "texte" | Out-File "notes.txt"                        -> idem (écrase)
+  "texte" | Out-File "notes.txt" -Append                -> ajoute à la fin
+
+--- LIRE ---
+  Get-Content -Path "notes.txt"         -> affiche le contenu
+  Get-Content -Path "notes.txt" -TotalCount 20    -> premières 20 lignes
+  notepad notes.txt                     -> ouvrir dans le Bloc-notes
+
+--- COPIER / DEPLACER / RENOMMER ---
+  Copy-Item  -Path "a.txt" -Destination "b.txt"     (alias cp / copy)
+  Copy-Item  -Path "a.txt" -Destination "D:\backup\"
+  Copy-Item  -Path "dossier" -Destination "copie" -Recurse    -> copier un dossier récursivement
+  Move-Item  -Path "a.txt" -Destination "B:\"        (alias mv / move)
+  Rename-Item -Path "notes.txt" -NewName "important.txt"  (alias ren)
+
+--- SUPPRIMER (attention, pas de corbeille !) ---
+  Remove-Item -Path "notes.txt"          (alias rm / del)
+  Remove-Item -Path "dossier" -Recurse -Force   -> supprimer dossier + contenu
+  Test-Path "notes.txt"                  -> existe (True/False) avant de supprimer
+
+--- RECOMMANDATION SÛRE ---
+  if (Test-Path "notes.txt") { Remove-Item "notes.txt" }
+  -> ne supprime que si le fichier existe vraiment.
+
+========================================================================
+6) ENCODAGE / AFFICHAGE DES ACCENTS (problème vu dans le projet)
+========================================================================
+
+  - PowerShell 5.1 lit un .ps1 en ANSI s'il n'a PAS de BOM.
+    => les accents (é, à, œ ...) peuvent casser le script.
+  - Solution : enregistrer le fichier en "UTF-8 avec BOM".
+    Regarder le fichier avec Notepad++ / VSCode : encodage "UTF-8-BOM".
+  - Dans un script on peut forcer la console en UTF-8 :
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+        $OutputEncoding           = [System.Text.Encoding]::UTF8
+
+========================================================================
+7) LE SCRIPT system_status.ps1 (celui du projet)
+========================================================================
+
+Rôle : rapport d'état du système (OS, RAM, CPU, disques, réseau,
+processus, activation Windows) + alertes et export.
+
+Paramètres :
+  -Computers  nom1, nom2   rapport à distance (WinRM / Invoke-Command)
+  -ExportPath chemin.txt   exporte .txt + .csv du rapport
+  -Threshold  85           seuil d'alerte en % (défaut 90)
+  -NoKey                   masque la clé d'activation complète
+
+Exemples :
+  .\system_status.ps1
+  .\system_status.ps1 -Threshold 80 -ExportPath C:\rapports\mon_pc.txt
+  .\system_status.ps1 -Computers PC1,PC2 -NoKey
+
+Commandes systèmes utilisées dedans (réutilisables en direct) :
+  Get-CimInstance Win32_OperatingSystem          -> OS, RAM, uptime
+  Get-CimInstance Win32_ComputerSystem           -> fabricant, modèle
+  Get-CimInstance Win32_Processor                -> CPU
+  Get-CimInstance Win32_PerfFormattedData_PerfOS_Processor -Filter "Name='_Total'"
+                                                 -> charge CPU en %
+  Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3"   -> disques locaux
+  Get-NetAdapter | Where-Object Status -eq Up    -> adaptateurs actifs
+  Get-NetIPAddress -AddressFamily IPv4           -> adresses IP
+  Get-Process | Sort-Object WorkingSet64 -Descending   -> top process par RAM
+  SoftwareLicensingProduct / SoftwareLicensingService   -> licence Windows
+  (Get-ItemProperty 'HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\SoftwareProtectionPlatform').BackupProductKeyDefault
+                                                 -> clé d'activation complète
+
+========================================================================
+8) PETITES ASTUCES SUPPLÉMENTAIRES
+========================================================================
+
+--- Pipeline (le |) ---
+Le "|" passe le résultat d'une commande à la suivante :
+  Get-Process | Sort-Object CPU -Descending | Select-Object -First 5
+  Get-ChildItem *.txt | Select-Object Name, Length
+  Get-Process | Where-Object { $_.WorkingSet64 -gt 500MB }
+
+--- Variables et environnement ---
+  $variable = "valeur"              -> créer une variable
+  "$variable est la valeur"          -> l'utiliser ("$...")
+  $env:COMPUTERNAME                 -> nom de la machine
+  $env:USERNAME, $env:USERDOMAIN    -> utilisateur / domaine
+  $env:Path                         -> chemins d'exécution
+  Get-ChildItem Env:                -> toutes les variables d'environnement
+
+--- Vue d'un objet ---
+  Get-Process explorer | Format-List *      -> voir toutes les propriétés
+  Get-Process explorer | Select-Object Id, ProcessName, CPU   -> choisir
+  Get-NetAdapter | Format-Table Name, Status, LinkSpeed -AutoSize
+
+--- Boucles rapides ---
+  foreach ($f in Get-ChildItem *.txt) { $f.Name }
+  1..10 | ForEach-Object { Get-Content "fichier$_.txt" }
+  Get-ChildItem -Recurse | Where-Object { $_.Name -like "*rapport*" }
+
+--- Rechercher un texte dans des fichiers ---
+  Get-ChildItem -Recurse *.ps1 | Select-String "NoKey"
+  (équivalent du grep, outil : findstr / grep)
+
+--- Prologue / profil utilisateur ---
+  $PROFILE                          -> chemin du profil PowerShell
+  if (!(Test-Path $PROFILE)) { New-Item -Path $PROFILE -ItemType File -Force }
+  notepad $PROFILE                  -> personnaliser (alias, raccourcis, chemin par défaut)
+
+========================================================================
+9) FIN
+========================================================================
+
+Raccourci mémoire, l'essentiel en une ligne :
+  .\script.ps1  tres basique : tout est Verbe-Nom, "." = le dossier actuel,
+  "|" = chaîne, Tab = complétion, Get-Help = ami.
