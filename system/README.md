@@ -2,6 +2,12 @@
 
 Scripts et guide d'administration Windows en PowerShell pour le système.
 
+<p>
+  <img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License MIT">
+  <img src="https://img.shields.io/badge/PowerShell-5391FE?style=flat-square&logo=powershell&logoColor=white" alt="PowerShell">
+  <a href="https://pyrecore.github.io/portfolio/"><img src="https://img.shields.io/badge/Portfolio-pyrecore.github.io-58a6ff?style=flat-square&logo=github&logoColor=white" alt="Portfolio"></a>
+</p>
+
 ## Contenu du dossier
 
 | Fichier | Description |
