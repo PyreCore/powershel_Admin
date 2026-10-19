@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://github.com/PyreCore"><img src="https://raw.githubusercontent.com/PyreCore/portfolio/main/branding/pyrecore-logo.png" alt="PyreCore" height="56"></a>
+</p>
+
 # powershell_Admin
 
 Scripts d'administration Windows en PowerShell.
